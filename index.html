@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EKO Solar Ops</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;overflow-x:hidden}
+body{font-family:'Inter',system-ui,sans-serif;background:#fff;color:#1a1a1a;overflow-x:hidden}
+
+/* ── Animations ── */
+.fade-up{opacity:0;transform:translateY(60px);transition:all 1s cubic-bezier(.22,1,.36,1)}
+.slide-left{opacity:0;transform:translateX(-80px);transition:all 1s cubic-bezier(.22,1,.36,1)}
+.slide-right{opacity:0;transform:translateX(80px);transition:all 1s cubic-bezier(.22,1,.36,1)}
+.scale-in{opacity:0;transform:scale(.92);transition:all 1s cubic-bezier(.22,1,.36,1)}
+.blur-in{opacity:0;filter:blur(8px);transition:all 1.2s cubic-bezier(.22,1,.36,1)}
+.visible{opacity:1!important;transform:none!important;filter:none!important}
+.d1{transition-delay:.1s}.d2{transition-delay:.2s}.d3{transition-delay:.3s}
+.d4{transition-delay:.4s}.d5{transition-delay:.5s}.d6{transition-delay:.6s}
+.d7{transition-delay:.7s}.d8{transition-delay:.8s}
+
+/* ── Nav ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px 48px;display:flex;align-items:center;justify-content:space-between;transition:all .4s}
+nav.scrolled{background:rgba(255,255,255,.88);backdrop-filter:blur(24px);border-bottom:1px solid rgba(0,0,0,.06);padding:14px 48px}
+.nav-brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;color:#1a1a1a;text-decoration:none;letter-spacing:-.02em}
+.nav-dot{width:8px;height:8px;border-radius:50%;background:#f59e0b}
+.nav-links{display:flex;gap:32px}
+.nav-links a{text-decoration:none;color:#888;font-size:13px;font-weight:500;transition:color .2s}
+.nav-links a:hover{color:#1a1a1a}
+
+/* ── Full-bleed sections ── */
+.section{width:100vw;padding:160px 0;position:relative}
+.section-inner{max-width:1280px;margin:0 auto;padding:0 64px}
+.section-alt{background:#fafafa}
+.section-dark{background:#0a0a0a;color:#fff}
+.section-dark .label{color:#f59e0b}
+.section-dark .subtitle{color:#666}
+
+.label{font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#d97706;margin-bottom:16px}
+.title{font-size:clamp(36px,5.5vw,64px);font-weight:900;line-height:1.05;letter-spacing:-.04em;margin-bottom:20px}
+.subtitle{font-size:19px;color:#777;line-height:1.7;max-width:580px;font-weight:400}
+
+/* ── Hero ── */
+.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 64px}
+.hero-content{max-width:900px}
+.hero .title{font-size:clamp(42px,7vw,80px);margin-bottom:24px}
+.hero .subtitle{max-width:540px;margin:0 auto 56px;font-size:20px}
+
+.stats-row{display:flex;justify-content:center;gap:64px;flex-wrap:wrap}
+.stat{text-align:center}
+.stat-num{font-size:52px;font-weight:900;letter-spacing:-.04em;line-height:1;color:#1a1a1a}
+.stat-label{font-size:12px;color:#aaa;margin-top:8px;font-weight:500;letter-spacing:.04em;text-transform:uppercase}
+
+/* ── Feature cards ── */
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:72px}
+@media(max-width:1024px){.features-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.features-grid{grid-template-columns:1fr}}
+
+.f-card{padding:36px;border-radius:20px;border:1px solid #eee;background:#fff;transition:all .4s cubic-bezier(.22,1,.36,1)}
+.f-card:hover{transform:translateY(-6px);box-shadow:0 20px 60px rgba(0,0,0,.06);border-color:transparent}
+.f-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:24px}
+.f-icon svg{width:22px;height:22px}
+.f-card h3{font-size:17px;font-weight:700;margin-bottom:10px;letter-spacing:-.02em}
+.f-card p{font-size:14px;color:#777;line-height:1.7;margin-bottom:16px}
+.f-card ul{list-style:none}
+.f-card li{font-size:13px;color:#555;padding:4px 0;display:flex;align-items:center;gap:10px}
+.f-card li::before{content:'';width:4px;height:4px;border-radius:50%;background:#d4d4d8;flex-shrink:0}
+
+.icon-amber{background:#fef3c7}.icon-amber svg{stroke:#d97706}
+.icon-emerald{background:#d1fae5}.icon-emerald svg{stroke:#059669}
+.icon-blue{background:#dbeafe}.icon-blue svg{stroke:#2563eb}
+.icon-purple{background:#ede9fe}.icon-purple svg{stroke:#7c3aed}
+.icon-rose{background:#ffe4e6}.icon-rose svg{stroke:#e11d48}
+.icon-cyan{background:#cffafe}.icon-cyan svg{stroke:#0891b2}
+.icon-slate{background:#f1f5f9}.icon-slate svg{stroke:#475569}
+.icon-orange{background:#ffedd5}.icon-orange svg{stroke:#ea580c}
+.icon-lime{background:#ecfccb}.icon-lime svg{stroke:#65a30d}
+
+/* ── Split sections ── */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
+@media(max-width:768px){.split{grid-template-columns:1fr;gap:48px}}
+
+/* ── Use cases ── */
+.uc-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px;margin-top:72px}
+@media(max-width:768px){.uc-grid{grid-template-columns:1fr}}
+.uc-card{padding:40px;border-radius:20px;border:1px solid #eee;transition:all .4s}
+.uc-card:hover{border-color:#f59e0b;box-shadow:0 8px 40px rgba(245,158,11,.08)}
+.uc-trade{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;margin-bottom:12px}
+.uc-card h3{font-size:20px;font-weight:700;margin-bottom:10px;letter-spacing:-.02em}
+.uc-card>p{font-size:14px;color:#777;line-height:1.7;margin-bottom:20px}
+.uc-quote{background:#fafafa;border-radius:12px;padding:20px;font-size:13px;color:#555;line-height:1.7;font-style:italic;border-left:3px solid #e4e4e7}
+
+/* ── Charts ── */
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:72px}
+@media(max-width:768px){.charts-grid{grid-template-columns:1fr}}
+.chart-box{background:#fff;border:1px solid #eee;border-radius:20px;padding:36px}
+.chart-box h3{font-size:15px;font-weight:700;margin-bottom:4px}
+.chart-box .chart-sub{font-size:12px;color:#aaa;margin-bottom:24px}
+.chart-wrap{position:relative;height:280px}
+
+/* ── Comparison table ── */
+.comp-table{width:100%;border-collapse:collapse;margin-top:48px}
+.comp-table th{text-align:left;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#aaa;padding:14px 20px;border-bottom:2px solid #e4e4e7}
+.comp-table th:last-child{text-align:right}
+.comp-table td{padding:16px 20px;font-size:14px;color:#555;border-bottom:1px solid #f4f4f5}
+.comp-table td:first-child{font-weight:600;color:#1a1a1a}
+.comp-table td:last-child{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+.comp-table .hl td{background:#fef3c7;font-weight:700;color:#1a1a1a;border-radius:0}
+.comp-table .hl td:first-child{border-radius:12px 0 0 12px}
+.comp-table .hl td:last-child{border-radius:0 12px 12px 0}
+.comp-table .total td{color:#aaa;border-bottom:2px solid #e4e4e7}
+.comp-table .total td:last-child{color:#ef4444;font-weight:700}
+
+/* ── Price ── */
+.price-block{text-align:center;margin-top:64px}
+.price-amount{font-size:88px;font-weight:900;letter-spacing:-.06em;line-height:1;color:#1a1a1a}
+.price-currency{font-size:36px;font-weight:700;color:#aaa;vertical-align:super}
+.price-period{font-size:20px;color:#aaa;font-weight:500}
+.price-note{font-size:14px;color:#aaa;margin-top:8px}
+
+/* ── Benefits ── */
+.benefits-row{display:grid;grid-template-columns:repeat(3,1fr);gap:48px;margin-top:72px}
+@media(max-width:768px){.benefits-row{grid-template-columns:1fr}}
+.benefit{text-align:center;padding:32px}
+.benefit-num{font-size:56px;font-weight:900;letter-spacing:-.04em;line-height:1;margin-bottom:12px}
+.benefit-title{font-size:15px;font-weight:700;margin-bottom:8px}
+.benefit-desc{font-size:13px;color:#888;line-height:1.6}
+
+/* ── Checklist ── */
+.checklist{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:48px}
+.check-item{display:flex;align-items:center;gap:12px;padding:16px 20px;border-radius:14px;background:#fafafa;border:1px solid #eee;font-size:14px;font-weight:500;color:#333;transition:all .3s}
+.check-item:hover{border-color:#f59e0b;transform:translateY(-2px)}
+.check-circle{width:24px;height:24px;border-radius:50%;background:#d1fae5;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.check-circle svg{width:12px;height:12px;stroke:#059669;stroke-width:3;fill:none}
+
+/* ── CTA ── */
+.cta-block{text-align:center}
+.cta-btn{display:inline-flex;align-items:center;gap:10px;background:#f59e0b;color:#000;font-size:16px;font-weight:700;padding:18px 40px;border-radius:100px;border:none;cursor:pointer;text-decoration:none;transition:all .3s}
+.cta-btn:hover{background:#d97706;transform:scale(1.04)}
+.cta-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2}
+
+/* ── Footer ── */
+footer{text-align:center;padding:48px 24px;color:#bbb;font-size:12px;letter-spacing:.02em}
+
+/* ── Scroll progress ── */
+.progress{position:fixed;top:0;left:0;height:2px;background:#f59e0b;z-index:200;transition:width .1s}
+
+@media(max-width:640px){
+  nav{padding:16px 24px}
+  nav.scrolled{padding:12px 24px}
+  .nav-links{display:none}
+  .section{padding:100px 0}
+  .section-inner{padding:0 24px}
+  .hero{padding:0 24px}
+  .stats-row{gap:32px}
+  .stat-num{font-size:36px}
+}
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<nav id="nav">
+  <a href="#" class="nav-brand"><span class="nav-dot"></span>EKO Solar Ops</a>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#usecases">Use Cases</a>
+    <a href="#economics">Economics</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#benefits">Benefits</a>
+  </div>
+</nav>
+
+<!-- ═══════ HERO ═══════ -->
+<div class="section hero" id="hero">
+  <div class="hero-content">
+    <div class="label blur-in">All-in-one platform</div>
+    <h1 class="title blur-in d1">Your entire solar business.<br>One powerful app.</h1>
+    <p class="subtitle blur-in d2">From lead capture to invoice paid. Job scheduling to permit tracking. CRM to client portal. Everything in one place.</p>
+    <div class="stats-row">
+      <div class="stat fade-up d3"><div class="stat-num" data-count="26">0</div><div class="stat-label">Features</div></div>
+      <div class="stat fade-up d4"><div class="stat-num" data-count="6">0</div><div class="stat-label">Integrations</div></div>
+      <div class="stat fade-up d5"><div class="stat-num">97%</div><div class="stat-label">Profit Margin</div></div>
+      <div class="stat fade-up d6"><div class="stat-num">$0</div><div class="stat-label">Setup Cost</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ FEATURES ═══════ -->
+<div class="section section-alt" id="features">
+  <div class="section-inner">
+    <div class="slide-left"><div class="label">Platform Features</div></div>
+    <h2 class="title slide-left d1">Everything to run your<br>field operations</h2>
+    <p class="subtitle slide-left d2">No more switching between apps. Every tool a solar contractor needs, designed to work together.</p>
+
+    <div class="features-grid">
+      <div class="f-card fade-up d1">
+        <div class="f-icon icon-amber"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+        <h3>Job Management</h3>
+        <p>Track every job from lead to completion with a full status pipeline.</p>
+        <ul><li>7-stage status pipeline</li><li>Photo documentation with captions</li><li>Subcontractor assignment</li><li>Card and table views</li><li>Advanced search and filtering</li></ul>
+      </div>
+      <div class="f-card fade-up d2">
+        <div class="f-icon icon-emerald"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+        <h3>Invoicing & Payments</h3>
+        <p>Professional invoices with Square payment processing built in.</p>
+        <ul><li>Itemized line items by category</li><li>Service deposits with tracking</li><li>Square integration</li><li>8-stage invoice lifecycle</li><li>Email invoices to clients</li></ul>
+      </div>
+      <div class="f-card fade-up d3">
+        <div class="f-icon icon-blue"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+        <h3>Smart Calendar</h3>
+        <p>Visual scheduling synced to Google Calendar automatically.</p>
+        <ul><li>Monthly calendar view</li><li>Google Calendar auto-sync</li><li>Appointment confirmations</li><li>Form bookings create events</li><li>Click to see scheduled jobs</li></ul>
+      </div>
+      <div class="f-card fade-up d1">
+        <div class="f-icon icon-purple"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <h3>CRM & Client Portal</h3>
+        <p>Manage leads and give clients their own self-service dashboard.</p>
+        <ul><li>Contact management</li><li>Client portal with login</li><li>Clients view jobs & invoices</li><li>Lead capture from forms</li><li>Direct email from app</li></ul>
+      </div>
+      <div class="f-card fade-up d2">
+        <div class="f-icon icon-orange"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+        <h3>Forms & Contracts</h3>
+        <p>Build forms, capture leads, and get contracts signed digitally.</p>
+        <ul><li>Drag-and-drop form builder</li><li>Public shareable links</li><li>Google Drive file uploads</li><li>Digital e-signatures</li><li>Submission notifications</li></ul>
+      </div>
+      <div class="f-card fade-up d3">
+        <div class="f-icon icon-cyan"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+        <h3>Permits & Equipment</h3>
+        <p>AI-powered permit research and a full equipment catalog.</p>
+        <ul><li>Auto-lookup permit offices</li><li>Equipment database</li><li>Specs and warranty tracking</li><li>Document library per job</li><li>Solar roof designer</li></ul>
+      </div>
+      <div class="f-card fade-up d1">
+        <div class="f-icon icon-rose"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><path d="M20.24 7.76a10 10 0 0 0-4-3.58V12h8a10 10 0 0 0-4-4.24z" opacity=".5"/><circle cx="12" cy="12" r="3"/></svg></div>
+        <h3>AI Assistant</h3>
+        <p>Built-in AI that knows your data and helps you work faster.</p>
+        <ul><li>Natural language queries</li><li>Update jobs via chat</li><li>Draft client emails</li><li>Navigate by asking</li><li>Zero setup required</li></ul>
+      </div>
+      <div class="f-card fade-up d2">
+        <div class="f-icon icon-slate"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+        <h3>Map View</h3>
+        <p>See all jobs on a map with smart address intelligence.</p>
+        <ul><li>Interactive job map</li><li>Address autocomplete</li><li>Click to navigate to job</li><li>Route planning</li><li>County-based permit lookup</li></ul>
+      </div>
+      <div class="f-card fade-up d3">
+        <div class="f-icon icon-lime"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+        <h3>Integrations</h3>
+        <p>One-click Google sign-up wires everything automatically.</p>
+        <ul><li>Google Calendar sync</li><li>Gmail for emails</li><li>Google Drive uploads</li><li>Google Maps geocoding</li><li>Square payments</li></ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ USE CASES ═══════ -->
+<div class="section" id="usecases">
+  <div class="section-inner">
+    <div class="slide-right"><div class="label">Real-World Use Cases</div></div>
+    <h2 class="title slide-right d1">Built for the trades</h2>
+    <p class="subtitle slide-right d2">Whether you're a solo installer or a growing crew, here's how businesses like yours use it every day.</p>
+
+    <div class="uc-grid">
+      <div class="uc-card slide-left d1">
+        <div class="uc-trade" style="color:#d97706">Solar Installer</div>
+        <h3>Solo Contractor</h3>
+        <p>One person managing installations, quotes, and client communication without an office team.</p>
+        <div class="uc-quote">"I get a lead from my website form, the job auto-creates in my pipeline, I send the invoice from my truck, and the client pays with Square before I even get home."</div>
+      </div>
+      <div class="uc-card slide-right d2">
+        <div class="uc-trade" style="color:#059669">Roofing Company</div>
+        <h3>Small Crew (3-8 people)</h3>
+        <p>A field manager coordinating multiple jobs, subcontractors, and permit timelines across the county.</p>
+        <div class="uc-quote">"I check the map view each morning to plan routes, assign subs to jobs, and the calendar keeps everyone synced. Permits are tracked per job so nothing slips."</div>
+      </div>
+      <div class="uc-card slide-left d3">
+        <div class="uc-trade" style="color:#2563eb">HVAC / Electrical</div>
+        <h3>Service-Based Business</h3>
+        <p>Recurring service calls, equipment tracking, and professional invoicing for warranty and maintenance work.</p>
+        <div class="uc-quote">"Clients log into their portal to request service, I see it in my pipeline, send a deposit invoice, and close the job with photos and a follow-up email automatically."</div>
+      </div>
+      <div class="uc-card slide-right d4">
+        <div class="uc-trade" style="color:#7c3aed">General Contractor</div>
+        <h3>Multi-Trade Operations</h3>
+        <p>Managing subcontractors, document templates, and complex invoicing across different job types.</p>
+        <div class="uc-quote">"Each job type has its own form. Contracts get signed digitally. I track materials, labor, and permit costs separately. One dashboard for everything."</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ ECONOMICS ═══════ -->
+<div class="section section-alt" id="economics">
+  <div class="section-inner">
+    <div class="slide-left"><div class="label">Platform Economics</div></div>
+    <h2 class="title slide-left d1">The numbers behind<br>the platform</h2>
+    <p class="subtitle slide-left d2">Extremely low per-subscriber costs mean industry-leading margins from day one.</p>
+
+    <div class="charts-grid">
+      <div class="chart-box fade-up d1">
+        <h3>Cost Per Subscriber</h3>
+        <div class="chart-sub">Monthly cost breakdown at different scales</div>
+        <div class="chart-wrap"><canvas id="costChart"></canvas></div>
+      </div>
+      <div class="chart-box fade-up d2">
+        <h3>Profit Margin by Scale</h3>
+        <div class="chart-sub">Revenue vs. total cost at $199/month</div>
+        <div class="chart-wrap"><canvas id="marginChart"></canvas></div>
+      </div>
+      <div class="chart-box fade-up d3">
+        <h3>Infrastructure Breakdown</h3>
+        <div class="chart-sub">Where the money goes</div>
+        <div class="chart-wrap"><canvas id="pieChart"></canvas></div>
+      </div>
+      <div class="chart-box fade-up d4">
+        <h3>Revenue Projection</h3>
+        <div class="chart-sub">Monthly recurring revenue over 12 months</div>
+        <div class="chart-wrap"><canvas id="revenueChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ PRICING ═══════ -->
+<div class="section" id="pricing">
+  <div class="section-inner" style="text-align:center">
+    <div class="fade-up"><div class="label">Pricing</div></div>
+    <h2 class="title fade-up d1">Replace 8+ tools with one</h2>
+    <p class="subtitle fade-up d2" style="margin:0 auto">Here's what contractors typically pay for separate tools. EKO Solar Ops replaces all of them.</p>
+
+    <table class="comp-table fade-up d3">
+      <thead><tr><th>Tool</th><th>Replaces</th><th>Monthly Cost</th></tr></thead>
+      <tbody>
+        <tr><td>Jobber / ServiceTitan</td><td>Job management, scheduling</td><td>$49 -- $199</td></tr>
+        <tr><td>QuickBooks / FreshBooks</td><td>Invoicing, payments</td><td>$30 -- $80</td></tr>
+        <tr><td>HubSpot / Salesforce</td><td>CRM, lead tracking</td><td>$50 -- $150</td></tr>
+        <tr><td>Calendly / Acuity</td><td>Scheduling, calendar sync</td><td>$16 -- $33</td></tr>
+        <tr><td>DocuSign / PandaDoc</td><td>E-signatures, contracts</td><td>$25 -- $65</td></tr>
+        <tr><td>Typeform / JotForm</td><td>Custom forms, lead capture</td><td>$25 -- $50</td></tr>
+        <tr><td>Google Workspace</td><td>Email, Drive, Calendar</td><td>$12 -- $18</td></tr>
+        <tr><td>ChatGPT Pro</td><td>AI assistant</td><td>$20</td></tr>
+        <tr class="total"><td>Typical total</td><td></td><td>$227 -- $615/mo</td></tr>
+        <tr class="hl"><td>EKO Solar Ops</td><td>All of the above</td><td>$199/mo</td></tr>
+      </tbody>
+    </table>
+
+    <div class="price-block fade-up d4">
+      <div><span class="price-currency">$</span><span class="price-amount">199</span><span class="price-period"> /month</span></div>
+      <div class="price-note">Everything included. No per-user fees. No hidden costs.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ BENEFITS ═══════ -->
+<div class="section section-alt" id="benefits">
+  <div class="section-inner">
+    <div class="slide-right"><div class="label">Why One App</div></div>
+    <h2 class="title slide-right d1">The benefits of running<br>everything in one place</h2>
+
+    <div class="benefits-row">
+      <div class="benefit scale-in d1">
+        <div class="benefit-num" style="color:#f59e0b">0</div>
+        <div class="benefit-title">Apps to Switch Between</div>
+        <div class="benefit-desc">No more copying data between tools. Everything lives in one system, connected and synced.</div>
+      </div>
+      <div class="benefit scale-in d2">
+        <div class="benefit-num" style="color:#10b981">5min</div>
+        <div class="benefit-title">Setup Time</div>
+        <div class="benefit-desc">Sign in with Google. The wizard sets up your calendar, payments, and profile automatically.</div>
+      </div>
+      <div class="benefit scale-in d3">
+        <div class="benefit-num" style="color:#3b82f6">24/7</div>
+        <div class="benefit-title">Client Self-Service</div>
+        <div class="benefit-desc">Clients check their own job status, view invoices, and sign contracts without calling you.</div>
+      </div>
+    </div>
+
+    <div style="margin-top:96px">
+      <h3 class="fade-up" style="font-size:22px;font-weight:800;letter-spacing:-.02em;margin-bottom:8px">Everything you need, nothing you don't</h3>
+      <p class="fade-up d1" style="color:#888;font-size:15px;margin-bottom:32px">One login. One dashboard. One subscription.</p>
+      <div class="checklist">
+        <div class="check-item fade-up d1"><div class="check-circle"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>Job Tracking</div>
+        <div class="check-item fade-up d1"><div class="check-circle"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>Invoicing</div>
+        <div class="check-item fade-up d1"><div class="check-circle"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>Online Payments</div>
+        <div class="check-item fade-up d2"><div class="check-circle"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>Calendar Sync</div>
+        <div class="check-item fade-up d2"><div class="check-circle"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>CRM</div>
+        <div class="check-item fade-up d2"><div class="check-circle"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>Client Portal</div>
+        <div class="check-item fade-up d3"><div class="check-circle"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>Custom Forms</div>
+        <div class="check-item fade-up d3"><div class="check-circle"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>E-Signatures</div>
+        <div class="check-item fade-up d3"><div class="check-circle"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>Document Library</div>
+        <div class="check-item fade-up d4"><div class="check-circle"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>Map View</div>
+        <div class="check-item fade-up d4"><div class="check-circle"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>Permit Research</div>
+        <div class="check-item fade-up d4"><div class="check-circle"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>Equipment Catalog</div>
+        <div class="check-item fade-up d5"><div class="check-circle"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>Solar Designer</div>
+        <div class="check-item fade-up d5"><div class="check-circle"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>AI Assistant</div>
+        <div class="check-item fade-up d5"><div class="check-circle"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>Email Integration</div>
+        <div class="check-item fade-up d6"><div class="check-circle"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>Google Drive</div>
+        <div class="check-item fade-up d6"><div class="check-circle"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>Photo Documentation</div>
+        <div class="check-item fade-up d6"><div class="check-circle"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>Quote Requests</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ CTA ═══════ -->
+<div class="section section-dark">
+  <div class="section-inner cta-block">
+    <div class="label scale-in">Get Started</div>
+    <h2 class="title scale-in d1">Ready to simplify<br>your business?</h2>
+    <p class="subtitle scale-in d2" style="margin:0 auto 40px">Join solar contractors who replaced their entire tool stack with one platform. Set up in 5 minutes.</p>
+    <a href="https://ops.lock28.com" class="cta-btn scale-in d3">Start Free Trial <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+  </div>
+</div>
+
+<footer>EKO Solar Ops -- Built for the trades. Powered by modern infrastructure.</footer>
+
+<script>
+// Scroll reveal
+const obs=new IntersectionObserver(e=>{e.forEach(el=>{if(el.isIntersecting)el.target.classList.add('visible')})},{threshold:.08,rootMargin:'0px 0px -60px 0px'});
+document.querySelectorAll('.fade-up,.slide-left,.slide-right,.scale-in,.blur-in').forEach(el=>obs.observe(el));
+
+// Nav
+window.addEventListener('scroll',()=>{
+  document.getElementById('nav').classList.toggle('scrolled',scrollY>40);
+  const h=document.documentElement.scrollHeight-innerHeight;
+  document.getElementById('progress').style.width=(scrollY/h*100)+'%';
+});
+
+// Counters
+const cobs=new IntersectionObserver(e=>{e.forEach(el=>{if(el.isIntersecting){
+  const t=parseInt(el.target.dataset.count);if(!t)return;
+  let c=0;const s=Math.ceil(t/25);
+  const i=setInterval(()=>{c+=s;if(c>=t){c=t;clearInterval(i)}el.target.textContent=c},35);
+  cobs.unobserve(el.target);
+}})},{threshold:.5});
+document.querySelectorAll('[data-count]').forEach(c=>cobs.observe(c));
+
+// Charts
+const chartObs=new IntersectionObserver(e=>{e.forEach(el=>{if(el.isIntersecting){initCharts();chartObs.disconnect()}})},{threshold:.15});
+chartObs.observe(document.getElementById('economics'));
+
+function initCharts(){
+  Chart.defaults.font.family="'Inter',sans-serif";
+  Chart.defaults.color='#aaa';
+
+  new Chart(document.getElementById('costChart'),{
+    type:'bar',
+    data:{labels:['10','25','50','100'],datasets:[
+      {label:'Fixed',data:[4.9,1.96,.98,.49],backgroundColor:'#fbbf24',borderRadius:8},
+      {label:'Variable',data:[.65,.65,.65,.65],backgroundColor:'#10b981',borderRadius:8}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{padding:16,usePointStyle:true,pointStyle:'circle'}}},scales:{x:{stacked:true,grid:{display:false},title:{display:true,text:'Subscribers',color:'#ccc'}},y:{stacked:true,ticks:{callback:v=>'$'+v},grid:{color:'#f0f0f0'}}}}
+  });
+
+  new Chart(document.getElementById('marginChart'),{
+    type:'bar',
+    data:{labels:['10','25','50','100'],datasets:[
+      {label:'Cost',data:[55.5,65.25,81.5,114],backgroundColor:'#ef4444',borderRadius:8},
+      {label:'Profit',data:[1934.5,4909.75,9868.5,19786],backgroundColor:'#10b981',borderRadius:8}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{padding:16,usePointStyle:true,pointStyle:'circle'}}},scales:{x:{stacked:true,grid:{display:false},title:{display:true,text:'Subscribers',color:'#ccc'}},y:{stacked:true,ticks:{callback:v=>v>=1e3?'$'+(v/1e3).toFixed(0)+'k':'$'+v},grid:{color:'#f0f0f0'}}}}
+  });
+
+  new Chart(document.getElementById('pieChart'),{
+    type:'doughnut',
+    data:{labels:['Supabase','Hosting','OpenAI/user','Google APIs'],datasets:[{data:[25,24,.5,.05],backgroundColor:['#3b82f6','#8b5cf6','#fbbf24','#10b981'],borderWidth:0,hoverOffset:10}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{position:'bottom',labels:{padding:16,usePointStyle:true,pointStyle:'circle'}}}}
+  });
+
+  new Chart(document.getElementById('revenueChart'),{
+    type:'line',
+    data:{labels:['1','2','3','4','5','6','7','8','9','10','11','12'],datasets:[{label:'MRR',data:[995,1990,3582,4975,6965,8955,10945,12935,14925,16915,18905,19900],borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.06)',fill:true,tension:.4,pointRadius:4,pointBackgroundColor:'#f59e0b',borderWidth:2.5}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},title:{display:true,text:'Month',color:'#ccc'}},y:{ticks:{callback:v=>'$'+(v/1e3).toFixed(0)+'k'},grid:{color:'#f0f0f0'}}}}
+  });
+}
+</script>
+</body>
+</html>
